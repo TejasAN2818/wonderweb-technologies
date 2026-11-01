@@ -273,6 +273,26 @@ function Skills() {
 
 const ProjectCard = forwardRef(function ProjectCard({ project, index }, ref) {
   const Icon = iconMap[project.icon] || FolderCode;
+  const [copyStatus, setCopyStatus] = useState("");
+  const copyTimer = useRef(null);
+
+  const copyProjectLink = async () => {
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = null;
+    try {
+      await navigator.clipboard.writeText(project.demo);
+      setCopyStatus("Website link copied.");
+      copyTimer.current = window.setTimeout(() => {
+        setCopyStatus("");
+        copyTimer.current = null;
+      }, 1800);
+    } catch {
+      setCopyStatus("Copying is unavailable in this browser.");
+    }
+  };
+
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
+
   return (
     <motion.article ref={ref} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .1 }} transition={{ duration: .45, delay: (index % 3) * .07 }} whileHover={{ y: -5 }} className="group overflow-hidden rounded-2xl border border-white/[.09] bg-[#0d121e] transition-colors hover:border-indigo-400/40">
       <div className={`relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-gradient-to-br ${colorMap[project.color] || colorMap.indigo}`}>
@@ -287,8 +307,13 @@ const ProjectCard = forwardRef(function ProjectCard({ project, index }, ref) {
         <div className="mt-5 flex flex-wrap gap-2">{project.tags.map(tag => <span key={tag} className="rounded-md border border-white/[.07] bg-white/[.03] px-2.5 py-1 text-[11px] text-slate-300">{tag}</span>)}</div>
         <div className="mt-6 flex gap-3 border-t border-white/[.07] pt-4">
           <a href={project.demo} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-white transition hover:text-indigo-300">Live demo <ExternalLink size={14} /></a>
+          <button type="button" onClick={copyProjectLink} aria-label={`Copy ${project.title} website link`} className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white">
+            {copyStatus === "Website link copied." ? <Check size={15} className="text-emerald-300" /> : <Copy size={15} />}
+            {copyStatus === "Website link copied." ? "Copied" : "Copy link"}
+          </button>
           <a href={project.github} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"><Github size={15} /> Source</a>
         </div>
+        {copyStatus && <p role="status" className={`mt-2 text-xs ${copyStatus === "Website link copied." ? "text-emerald-300" : "text-amber-200"}`}>{copyStatus}</p>}
       </div>
     </motion.article>
   );
